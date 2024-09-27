@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bucket with Pouring Water</title>
+    <style>
+        body { margin: 0; }
+        canvas { display: block; }
+    </style>
+</head>
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+    <script>
+        // Scene setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Lighting
+        const light = new THREE.DirectionalLight(0xffffff, 1);
+        light.position.set(5, 5, 5).normalize();
+        scene.add(light);
+
+        // Bucket geometry (a simple cylinder)
+        const bucketGeometry = new THREE.CylinderGeometry(1, 1, 2, 32);
+        const bucketMaterial = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.8, roughness: 0.4 });
+        const bucket = new THREE.Mesh(bucketGeometry, bucketMaterial);
+        bucket.position.y = -1;  // Position bucket on the ground
+        scene.add(bucket);
+
+        // Water droplets (simple spheres falling into the bucket)
+        const droplets = [];
+        const waterMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+
+        function createDroplet() {
+            const dropletGeometry = new THREE.SphereGeometry(0.05, 16, 16);
+            const droplet = new THREE.Mesh(dropletGeometry, waterMaterial);
+            droplet.position.set(Math.random() * 0.4 - 0.2, 2, Math.random() * 0.4 - 0.2); // Random starting position above the bucket
+            scene.add(droplet);
+            droplets.push(droplet);
+        }
+
+        // Update water droplets (falling effect)
+        function updateDroplets() {
+            droplets.forEach((droplet, index) => {
+                droplet.position.y -= 0.02;  // Gravity effect
+                if (droplet.position.y < -1) {
+                    droplet.position.y = -1;  // Stop at the bottom of the bucket
+                }
+            });
+        }
+
+        camera.position.z = 5;
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Create new droplets
+            if (Math.random() < 0.1) {
+                createDroplet();
+            }
+
+            // Update droplet positions
+            updateDroplets();
+
+            // Render the scene
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
