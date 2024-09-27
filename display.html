@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Select an Object to Display</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+        canvas { display: block; }
+        #controls {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="controls">
+        <label for="objectType">What do you want to display?</label>
+        <select id="objectType">
+            <option value="bucket">Bucket</option>
+            <option value="cube">Cube</option>
+            <option value="rectangle">Rectangle</option>
+            <option value="pie">Pie</option>
+            <option value="dog">Dog</option>
+        </select>
+        <button id="displayBtn">Display</button>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script>
+        // Scene, Camera, and Renderer setup
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+        scene.add(ambientLight);
+
+        const pointLight = new THREE.PointLight(0xffffff, 1);
+        pointLight.position.set(5, 5, 5);
+        scene.add(pointLight);
+
+        camera.position.z = 5;
+
+        let currentObject = null;
+
+        // Function to clear existing object
+        function clearObject() {
+            if (currentObject) {
+                scene.remove(currentObject);
+                currentObject.geometry.dispose();
+                currentObject.material.dispose();
+                currentObject = null;
+            }
+        }
+
+        // Function to create the selected object
+        function createObject(type) {
+            clearObject();
+
+            let geometry, material;
+
+            switch (type) {
+                case 'bucket':
+                    geometry = new THREE.CylinderGeometry(1, 1, 2, 32);
+                    material = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.4, roughness: 0.5 });
+                    currentObject = new THREE.Mesh(geometry, material);
+                    break;
+                case 'cube':
+                    geometry = new THREE.BoxGeometry(1, 1, 1);
+                    material = new THREE.MeshStandardMaterial({ color: 0x00ff00 });
+                    currentObject = new THREE.Mesh(geometry, material);
+                    break;
+                case 'rectangle':
+                    geometry = new THREE.BoxGeometry(2, 1, 1);
+                    material = new THREE.MeshStandardMaterial({ color: 0xff0000 });
+                    currentObject = new THREE.Mesh(geometry, material);
+                    break;
+                case 'pie':
+                    geometry = new THREE.CylinderGeometry(1, 1, 0.5, 32, 1, true);
+                    material = new THREE.MeshStandardMaterial({ color: 0xffff00 });
+                    currentObject = new THREE.Mesh(geometry, material);
+                    break;
+                case 'dog':
+                    geometry = new THREE.BoxGeometry(1, 0.5, 0.5);
+                    material = new THREE.MeshStandardMaterial({ color: 0x8B4513 });  // Brown like a dog
+                    currentObject = new THREE.Mesh(geometry, material);
+                    break;
+                default:
+                    return;
+            }
+
+            currentObject.position.y = 0;  // Adjust to be centered
+            scene.add(currentObject);
+        }
+
+        // Handle user selection and display the object
+        document.getElementById('displayBtn').addEventListener('click', () => {
+            const selectedObject = document.getElementById('objectType').value;
+            createObject(selectedObject);
+        });
+
+        // Render loop
+        function animate() {
+            requestAnimationFrame(animate);
+
+            if (currentObject) {
+                currentObject.rotation.x += 0.01;
+                currentObject.rotation.y += 0.01;
+            }
+
+            renderer.render(scene, camera);
+        }
+        animate();
+    </script>
+</body>
+</html>
