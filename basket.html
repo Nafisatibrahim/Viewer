@@ -3,26 +3,28 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bucket Filling with Overflow</title>
+    <title>Bucket Filling with Droplets</title>
     <style>
-        body { margin: 0; }
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #ffffff;
+        }
         canvas { display: block; }
     </style>
 </head>
 <body>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script>
         // Scene setup
         const scene = new THREE.Scene();
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         const renderer = new THREE.WebGLRenderer();
         renderer.setSize(window.innerWidth, window.innerHeight);
-        renderer.setClearColor(0xffffff);  // Set the background color to white
         document.body.appendChild(renderer.domElement);
-
-        // Orbit controls to rotate and zoom the scene
-        const controls = new THREE.OrbitControls(camera, renderer.domElement);
 
         // Lighting setup
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6); // General light
@@ -32,14 +34,14 @@
         pointLight.position.set(5, 5, 5);
         scene.add(pointLight);
 
-        // Bucket geometry with a slightly shiny material
+        // Bucket geometry
         const bucketGeometry = new THREE.CylinderGeometry(1, 1, 2, 32);
         const bucketMaterial = new THREE.MeshStandardMaterial({
             color: 0x888888, 
             metalness: 0.4,
             roughness: 0.5,
             transparent: true,
-            opacity: 0.5
+            opacity: 0.7
         });
         const bucket = new THREE.Mesh(bucketGeometry, bucketMaterial);
         bucket.position.y = -1;
@@ -64,56 +66,58 @@
         const droplets = [];
         const waterDropletMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
 
+        let waterHeight = 0;  // Initial water height
+        const maxWaterHeight = 2;  // The point at which water will start to overflow
+        let waterFillRate = 0.002; // How fast water should fill with each droplet
+
         function createDroplet() {
-            const dropletGeometry = new THREE.SphereGeometry(0.05, 16, 16);  // Slightly smaller size for overflow droplets
+            const dropletGeometry = new THREE.SphereGeometry(0.05, 16, 16);  // Droplet size
             const droplet = new THREE.Mesh(dropletGeometry, waterDropletMaterial);
             droplet.position.set(Math.random() * 0.4 - 0.2, 2, Math.random() * 0.4 - 0.2); // Random position above bucket
             scene.add(droplet);
             droplets.push(droplet);
         }
 
-        // Update water level and create overflow droplets
-        let waterHeight = 0;  // Initial water height
-        const maxWaterHeight = 2;  // The point at which water will start to overflow
-
-        function updateWaterLevel() {
-            if (waterHeight < maxWaterHeight) {
-                // Increase the water height
-                waterHeight += 0.005;
-                waterLevel.scale.y = waterHeight;  // Scale water level to simulate filling
-                waterLevel.position.y = -1 + (waterHeight / 2);  // Adjust position so it rises from bottom
-            } else {
-                // Create overflow droplets
-                if (Math.random() < 0.2) {
-                    createDroplet();
-                }
-            }
-        }
-
-        // Water droplets falling (overflow) animation
+        // Function to detect when a droplet hits the water or bottom of the bucket
         function updateDroplets() {
-            droplets.forEach((droplet) => {
+            droplets.forEach((droplet, index) => {
                 droplet.position.y -= 0.03;  // Gravity effect
-                if (droplet.position.y < -2) {
-                    droplet.position.y = -2;  // Stop at the bottom, outside the bucket
+
+                // Check if droplet hits the water surface and stop it
+                if (droplet.position.y <= waterLevel.position.y + waterHeight / 2) {
+                    // Remove the droplet from the scene
+                    scene.remove(droplet);
+                    droplets.splice(index, 1);
+
+                    // Increase water level
+                    if (waterHeight < maxWaterHeight) {
+                        waterHeight += waterFillRate;
+                        waterLevel.scale.y = waterHeight;  // Scale water level to simulate filling
+                        waterLevel.position.y = -1 + (waterHeight / 2);  // Adjust position so it rises from bottom
+                    }
                 }
             });
         }
 
+        // Droplet creation loop
+        function dropWater() {
+            if (Math.random() < 0.2) {  // Randomized droplet generation
+                createDroplet();
+            }
+        }
+
         camera.position.z = 5;
-        controls.update();
 
         // Animation loop
         function animate() {
             requestAnimationFrame(animate);
 
-            // Update water level in the bucket
-            updateWaterLevel();
-
-            // Update droplet positions for overflow
+            // Update droplet positions and water level
             updateDroplets();
 
-            controls.update();
+            // Create water droplets
+            dropWater();
+
             renderer.render(scene, camera);
         }
         animate();
