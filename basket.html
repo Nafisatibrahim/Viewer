@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bucket with Water - White Background</title>
+    <title>Bucket Filling with Overflow</title>
     <style>
         body { margin: 0; }
         canvas { display: block; }
@@ -53,24 +53,49 @@
         plane.position.y = -2;
         scene.add(plane);
 
-        // Water droplets using spheres
+        // Water surface geometry (transparent cylinder) to simulate rising water level
+        const waterGeometry = new THREE.CylinderGeometry(0.99, 0.99, 0.1, 32);  // Same size as bucket but thin
+        const waterMaterial = new THREE.MeshStandardMaterial({ color: 0x0000ff, transparent: true, opacity: 0.7 });
+        const waterLevel = new THREE.Mesh(waterGeometry, waterMaterial);
+        waterLevel.position.y = -1.9;  // Start at the bottom of the bucket
+        scene.add(waterLevel);
+
+        // Water droplets using spheres (for overflow)
         const droplets = [];
-        const waterMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
+        const waterDropletMaterial = new THREE.MeshBasicMaterial({ color: 0x0000ff });
 
         function createDroplet() {
-            const dropletGeometry = new THREE.SphereGeometry(0.07, 16, 16);  // Increased size of droplets
-            const droplet = new THREE.Mesh(dropletGeometry, waterMaterial);
+            const dropletGeometry = new THREE.SphereGeometry(0.05, 16, 16);  // Slightly smaller size for overflow droplets
+            const droplet = new THREE.Mesh(dropletGeometry, waterDropletMaterial);
             droplet.position.set(Math.random() * 0.4 - 0.2, 2, Math.random() * 0.4 - 0.2); // Random position above bucket
             scene.add(droplet);
             droplets.push(droplet);
         }
 
-        // Water falling animation
+        // Update water level and create overflow droplets
+        let waterHeight = 0;  // Initial water height
+        const maxWaterHeight = 2;  // The point at which water will start to overflow
+
+        function updateWaterLevel() {
+            if (waterHeight < maxWaterHeight) {
+                // Increase the water height
+                waterHeight += 0.005;
+                waterLevel.scale.y = waterHeight;  // Scale water level to simulate filling
+                waterLevel.position.y = -1 + (waterHeight / 2);  // Adjust position so it rises from bottom
+            } else {
+                // Create overflow droplets
+                if (Math.random() < 0.2) {
+                    createDroplet();
+                }
+            }
+        }
+
+        // Water droplets falling (overflow) animation
         function updateDroplets() {
             droplets.forEach((droplet) => {
                 droplet.position.y -= 0.03;  // Gravity effect
-                if (droplet.position.y < -1) {
-                    droplet.position.y = -1;  // Stop at the bottom of the bucket
+                if (droplet.position.y < -2) {
+                    droplet.position.y = -2;  // Stop at the bottom, outside the bucket
                 }
             });
         }
@@ -82,12 +107,10 @@
         function animate() {
             requestAnimationFrame(animate);
 
-            // Create more droplets over time
-            if (Math.random() < 0.2) {  // Higher probability for more water
-                createDroplet();
-            }
+            // Update water level in the bucket
+            updateWaterLevel();
 
-            // Update droplet positions
+            // Update droplet positions for overflow
             updateDroplets();
 
             controls.update();
@@ -97,4 +120,3 @@
     </script>
 </body>
 </html>
-
