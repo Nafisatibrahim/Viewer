@@ -14,10 +14,23 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
+            overflow: hidden;
         }
-        canvas { display: block; }
+        canvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
         #controls {
+            z-index: 1;
+            position: relative;
             margin-bottom: 20px;
+            background-color: white;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
         }
     </style>
 </head>
@@ -33,6 +46,7 @@
         </select>
         <button id="displayBtn">Display</button>
     </div>
+    
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
         // Scene, Camera, and Renderer setup
@@ -121,6 +135,13 @@
             renderer.render(scene, camera);
         }
         animate();
+
+        // Handle resizing
+        window.addEventListener('resize', () => {
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+        });
     </script>
 </body>
 </html>
